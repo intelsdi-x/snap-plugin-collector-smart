@@ -60,6 +60,34 @@ func sysUtilWithMetrics(metrics []byte) fakeSysutilProvider2 {
 	return util
 }
 
+func TestSmartCollectorPlugin(t *testing.T) {
+	Convey("Meta should return Metadata for the plugin", t, func() {
+		meta := Meta()
+		So(meta.Name, ShouldResemble, name)
+		So(meta.Version, ShouldResemble, version)
+		So(meta.Type, ShouldResemble, plugin.PublisherPluginType)
+	})
+
+	Convey("Create Smart Collector", t, func() {
+		sCol := NewSmartCollector()
+		Convey("So sCol should not be nil", func() {
+			So(sCol, ShouldNotBeNil)
+		})
+		Convey("So sCol should be of Psutil type", func() {
+			So(sCol, ShouldHaveSameTypeAs, &SmartCollector{})
+		})
+		Convey("sCol.GetConfigPolicy() should return a config policy", func() {
+			configPolicy, _ := sCol.GetConfigPolicy()
+			Convey("So config policy should not be nil", func() {
+				So(configPolicy, ShouldNotBeNil)
+			})
+			Convey("So config policy should be a cpolicy.ConfigPolicy", func() {
+				So(configPolicy, ShouldHaveSameTypeAs, &cpolicy.ConfigPolicy{})
+			})
+		})
+	})
+}
+
 func TestGetMetricTypes(t *testing.T) {
 	Convey("When having two devices with known smart attribute", t, func() {
 
