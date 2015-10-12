@@ -30,7 +30,7 @@ func main() {
 
 	plugin.Start(
 		smart.Meta(),
-		NewSmartCollector(),
+		smart.NewSmartCollector(),
 		os.Args[1],
 	)
 }
