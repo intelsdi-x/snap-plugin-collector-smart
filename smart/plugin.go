@@ -30,7 +30,7 @@ import (
 
 const (
 	name       = "pulse-collector-smart"
-	version    = 1
+	version    = 2
 	pluginType = plugin.CollectorPluginType
 )
 
