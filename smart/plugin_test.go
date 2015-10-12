@@ -21,11 +21,12 @@ package smart
 
 import (
 	"errors"
-	"github.com/intelsdi-x/pulse/control/plugin"
-	. "github.com/smartystreets/goconvey/convey"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/intelsdi-x/pulse/control/plugin"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 type fakeSysutilProvider2 struct {

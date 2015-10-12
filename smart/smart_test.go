@@ -22,10 +22,11 @@ package smart
 import (
 	"errors"
 	"fmt"
-	. "github.com/smartystreets/goconvey/convey"
 	"os"
 	"strings"
 	"testing"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 type IoctlArgsType struct {
