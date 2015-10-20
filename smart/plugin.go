@@ -30,7 +30,7 @@ import (
 
 const (
 	name       = "pulse-collector-smart"
-	version    = 2
+	version    = 3
 	pluginType = plugin.CollectorPluginType
 )
 
@@ -125,7 +125,7 @@ func (sc *SmartCollector) CollectMetrics(mts []plugin.PluginMetricType) ([]plugi
 }
 
 // GetMetricTypes returns the metric types exposed by smart
-func (sc *SmartCollector) GetMetricTypes() ([]plugin.PluginMetricType, error) {
+func (sc *SmartCollector) GetMetricTypes(_ plugin.PluginConfigType) ([]plugin.PluginMetricType, error) {
 	smart_metrics := ListAllKeys()
 	devices, err := sysUtilProvider.ListDevices()
 	if err != nil {
