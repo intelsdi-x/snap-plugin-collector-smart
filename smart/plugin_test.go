@@ -4,7 +4,7 @@
 http://www.apache.org/licenses/LICENSE-2.0.txt
 
 
-Copyright 2015 Intel Coporation
+Copyright 2015 Intel Corporation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -105,7 +105,7 @@ func TestGetMetricTypes(t *testing.T) {
 			Convey("Both devices should be present in metric list", func() {
 
 				dev_one, dev_two := false, false
-				metrics, _ := collector.GetMetricTypes()
+				metrics, _ := collector.GetMetricTypes(plugin.PluginConfigType{})
 
 				for _, m := range metrics {
 					switch m.Namespace()[2] {

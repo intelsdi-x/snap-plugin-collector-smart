@@ -2,7 +2,7 @@
 http://www.apache.org/licenses/LICENSE-2.0.txt
 
 
-Copyright 2015 Intel Coporation
+Copyright 2015 Intel Corporation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import (
 
 const (
 	name       = "pulse-collector-smart"
-	version    = 2
+	version    = 3
 	pluginType = plugin.CollectorPluginType
 )
 
@@ -125,7 +125,7 @@ func (sc *SmartCollector) CollectMetrics(mts []plugin.PluginMetricType) ([]plugi
 }
 
 // GetMetricTypes returns the metric types exposed by smart
-func (sc *SmartCollector) GetMetricTypes() ([]plugin.PluginMetricType, error) {
+func (sc *SmartCollector) GetMetricTypes(_ plugin.PluginConfigType) ([]plugin.PluginMetricType, error) {
 	smart_metrics := ListAllKeys()
 	devices, err := sysUtilProvider.ListDevices()
 	if err != nil {
