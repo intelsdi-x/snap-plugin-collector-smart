@@ -105,7 +105,7 @@ func TestGetMetricTypes(t *testing.T) {
 			Convey("Both devices should be present in metric list", func() {
 
 				dev_one, dev_two := false, false
-				metrics, _ := collector.GetMetricTypes()
+				metrics, _ := collector.GetMetricTypes(plugin.PluginConfigType{})
 
 				for _, m := range metrics {
 					switch m.Namespace()[2] {
