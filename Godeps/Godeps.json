@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/intelsdi-x/pulse-plugin-collector-smart",
+	"ImportPath": "github.com/intelsdi-x/snap-plugin-collector-smart",
 	"GoVersion": "go1.4.2",
 	"Deps": [
 		{
@@ -17,9 +17,9 @@
 			"Rev": "eb2e83c1df892d2c9ad5a3c85672da30be585dfd"
 		},
 		{
-			"ImportPath": "github.com/intelsdi-x/pulse",
+			"ImportPath": "github.com/intelsdi-x/snap",
 			"Comment": "v0.8.0-beta",
-			"Rev": "de2881352745c206284b74f4ef1165ba4510971a"
+			"Rev": "0c65a1359589a71aded24150402627210efb70d2"
 		}
 	]
 }

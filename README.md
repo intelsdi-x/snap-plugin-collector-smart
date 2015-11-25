@@ -1,4 +1,4 @@
-# Pulse SMART Collector Plugin
+# Snap SMART Collector Plugin
 
 This plugin monitors storage systems from Intel's SSDs. Raw data interpretation is based on [State Drive DC S3700 Series specification](http://www.intel.com/content/dam/www/public/us/en/documents/product-specifications/ssd-dc-s3700-spec.pdf). 
 Other disks may have different attributes or different raw data formats.
@@ -94,12 +94,12 @@ Namespace | Data Type | Description (optional)
 /intel/disk/\<device_name\>/read/normalized | | always 100
 
 ## Community Support
-This repository is one of **many** plugins in the **Pulse Framework**: a powerful telemetry agent framework. To reach out to other uses, reach out to us on:
+This repository is one of **many** plugins in the **Snap Framework**: a powerful telemetry agent framework. To reach out to other uses, reach out to us on:
 
-* Pulse Gitter channel (@TODO Link)
+* Snap Gitter channel (@TODO Link)
 * Our Google Group (@TODO Link)
 
-The full project is at http://github.com:intelsdi-x/pulse.
+The full project is at http://github.com:intelsdi-x/snap.
 
 ## Contributing
 We love contributions! :heart_eyes:
@@ -107,7 +107,7 @@ We love contributions! :heart_eyes:
 There's more than one way to give back, from examples to blogs to code updates. See our recommended process in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
-Pulse, along with this plugin, is an Open Source software released under the Apache 2.0 [License](LICENSE).
+Snap, along with this plugin, is an Open Source software released under the Apache 2.0 [License](LICENSE).
 
 ## Acknowledgements
 List authors, co-authors and anyone you'd like to mention

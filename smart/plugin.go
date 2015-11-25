@@ -24,12 +24,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/intelsdi-x/pulse/control/plugin"
-	"github.com/intelsdi-x/pulse/control/plugin/cpolicy"
+	"github.com/intelsdi-x/snap/control/plugin"
+	"github.com/intelsdi-x/snap/control/plugin/cpolicy"
 )
 
 const (
-	name       = "pulse-collector-smart"
+	name       = "snap-collector-smart"
 	version    = 4
 	pluginType = plugin.CollectorPluginType
 )
@@ -40,7 +40,7 @@ var namespace_prefix = []string{"intel", "disk"}
 var namespace_suffix = []string{"smart"}
 
 func Meta() *plugin.PluginMeta {
-	return plugin.NewPluginMeta(name, version, pluginType, []string{plugin.PulseGOBContentType}, []string{plugin.PulseGOBContentType})
+	return plugin.NewPluginMeta(name, version, pluginType, []string{plugin.SnapGOBContentType}, []string{plugin.SnapGOBContentType})
 }
 
 func NewSmartCollector() *SmartCollector {
