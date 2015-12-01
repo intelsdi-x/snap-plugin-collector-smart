@@ -30,7 +30,7 @@ import (
 
 const (
 	name       = "snap-collector-smart"
-	version    = 4
+	version    = 5
 	pluginType = plugin.CollectorPluginType
 )
 
