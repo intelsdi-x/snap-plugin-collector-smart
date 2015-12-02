@@ -1,8 +1,4 @@
-Below is a default CONTRIBUTING.md file for all projects published under the [Intel SDI-X](https://github.com/intelsdi-x/) organization.
-
-Please open a PR if you think anything should change!
-
-# Snap SMART Collector Plugin
+# snap collector plugin - SMART
 
 1. [Contributing Code](#contributing-code)
 2. [Contributing Examples](#contributing-examples)
@@ -23,10 +19,14 @@ Thank you for being part of the community! We love you for it.
 Once you're ready to contribute code back to this repo, start with these steps:
 
 * Fork the appropriate sub-projects that are affected by your change
+* Clone the fork to `$GOPATH/src/github.com/intelsdi-x/`  
+	```
+	$ git clone https://github.com/<yourGithubID>/<project>.git
+	```
 * Create a topic branch for your change and checkout that branch  
-     ```
-     $ git checkout -b some-topic-branch
-     ```
+    ```
+    $ git checkout -b some-topic-branch
+    ```
 * Make your changes and run the test suite if one is provided (see below)
 * Commit your changes and push them to your fork
 * Open a pull request for the appropriate project
@@ -38,11 +38,11 @@ If you have questions feel free to contact the [maintainers](README.md#maintaine
 ## Contributing Examples
 The most immediately helpful way you can benefit this project is by cloning the repository, adding some further examples and submitting a pull request.
 
-Have you written a blog post about how you use project? Send it to us!
+Have you written a blog post about how you use [snap](http://github.com/intelsdi-x/snap) and/or this plugin? Send it to us!
 
 
 ## Contribute Elsewhere
-This repository is one of **many** plugins in the **Snap Framework**: a powerful telemetry agent framework. See the full project at http://github.com/intelsdi-x/snap
+This repository is one of **many** plugins in **snap**, a powerful telemetry framework. See the full project at http://github.com/intelsdi-x/snap
 
 ## Thank You
-And **thank you!** Your contribution is incredibly important to us.
+This repository is one of **many** plugins in **snap**, a powerful telemetry framework. See the full project at http://github.com/intelsdi-x/snap
