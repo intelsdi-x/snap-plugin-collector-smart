@@ -1,13 +1,15 @@
-# Snap SMART Collector Plugin
+# snap collector plugin - SMART
 
 This plugin monitors storage systems from Intel's SSDs. Raw data interpretation is based on [State Drive DC S3700 Series specification](http://www.intel.com/content/dam/www/public/us/en/documents/product-specifications/ssd-dc-s3700-spec.pdf). 
 Other disks may have different attributes or different raw data formats.
 
 1. [Getting Started](#getting-started)
   * [System Requirements](#system-requirements)
+  * [Installation](#installation)
   * [Configuration and Usage](configuration-and-usage)
 2. [Documentation](#documentation)
   * [Collected Metrics](#collected-metrics)
+  * [Roadmap](#roadmap)
 3. [Community Support](#community-support)
 4. [Contributing](#contributing)
 5. [License](#license-and-authors)
@@ -18,14 +20,34 @@ Other disks may have different attributes or different raw data formats.
 Plugin directly reads underlying device parameters using [ioctl(2)](http://man7.org/linux/man-pages/man2/ioctl.2.html)
 
 ### System Requirements
+* [golang 1.4+](https://golang.org/dl/)
 
-Include:
-
-- Plugin works only on Linux OSes.
+### Operating systems
+All OSs currently supported by plugin:
+* Linux/amd64
 
 ### Configuration and Usage
 
-- SMART enabled in BIOS
+**Enable SMART support in BIOS**
+
+### Installation
+#### Download SMART plugin binary:
+You can get the pre-built binaries for your OS and architecture at snap's [GitHub Releases](https://github.com/intelsdi-x/snap/releases) page.
+
+#### To build the plugin binary:
+Fork https://github.com/intelsdi-x/snap-plugin-collector-smart  
+Clone repo into `$GOPATH/src/github.com/intelsdi-x/`:
+
+```
+$ git clone https://github.com/<yourGithubID>/snap-plugin-collector-smart.git
+```
+
+Build the plugin by running make within the cloned repo:
+```
+$ make
+```
+This builds the plugin in `/build/rootfs/`
+
 
 ## Documentation
 
@@ -93,25 +115,22 @@ Namespace | Data Type | Description (optional)
 /intel/disk/\<device_name\>/read | | total number of sectors read by the host system
 /intel/disk/\<device_name\>/read/normalized | | always 100
 
+### Roadmap
+There isn't a current roadmap for this plugin, but it is in active development. As we launch this plugin, we do not have any outstanding requirements for the next release. If you have a feature request, please add it as an [issue](https://github.com/intelsdi-x/snap-plugin-collector-smart/issues/new) and/or submit a [pull request](https://github.com/intelsdi-x/snap-plugin-collector-smart/pulls).
+
 ## Community Support
-This repository is one of **many** plugins in the **Snap Framework**: a powerful telemetry agent framework. To reach out to other uses, reach out to us on:
-
-* Snap Gitter channel (@TODO Link)
-* Our Google Group (@TODO Link)
-
-The full project is at http://github.com:intelsdi-x/snap.
+This repository is one of **many** plugins in **snap**, a powerful telemetry framework. See the full project at http://github.com/intelsdi-x/snap To reach out to other users, head to the [main framework](https://github.com/intelsdi-x/snap#community-support)
 
 ## Contributing
-We love contributions! :heart_eyes:
+We love contributions
 
 There's more than one way to give back, from examples to blogs to code updates. See our recommended process in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
-Snap, along with this plugin, is an Open Source software released under the Apache 2.0 [License](LICENSE).
+[snap](http://github.com:intelsdi-x/snap), along with this plugin, is an Open Source software released under the Apache 2.0 [License](LICENSE).
 
 ## Acknowledgements
-List authors, co-authors and anyone you'd like to mention
 
 * Author: [Lukasz Mroz](https://github.com/lmroz)
 
-**Thank you!** Your contribution is incredibly important to us.
+And **thank you!** Your contribution, through code and participation, is incredibly important to us.
