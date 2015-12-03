@@ -29,8 +29,8 @@ import (
 )
 
 const (
-	name       = "snap-collector-smart"
-	version    = 5
+	name       = "smart-disk"
+	version    = 6
 	pluginType = plugin.CollectorPluginType
 )
 
