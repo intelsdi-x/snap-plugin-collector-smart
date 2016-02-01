@@ -33,7 +33,7 @@ import (
 
 const (
 	name       = "smart-disk"
-	version    = 6
+	version    = 7
 	pluginType = plugin.CollectorPluginType
 )
 
