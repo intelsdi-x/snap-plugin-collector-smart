@@ -20,7 +20,7 @@ Other disks may have different attributes or different raw data formats.
 Plugin directly reads underlying device parameters using [ioctl(2)](http://man7.org/linux/man-pages/man2/ioctl.2.html)
 
 ### System Requirements
-* [golang 1.4+](https://golang.org/dl/)
+* [golang 1.5+](https://golang.org/dl/)  (needed only for building)
 
 ### Operating systems
 All OSs currently supported by plugin:
