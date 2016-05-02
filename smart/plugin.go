@@ -22,7 +22,10 @@ package smart
 import (
 	"errors"
 	"fmt"
+	"log"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/intelsdi-x/snap/control/plugin"
 	"github.com/intelsdi-x/snap/control/plugin/cpolicy"
@@ -94,12 +97,32 @@ func (sc *SmartCollector) CollectMetrics(mts []plugin.MetricType) ([]plugin.Metr
 	buffered_results := map[string]smartResults{}
 
 	results := make([]plugin.MetricType, len(mts))
+	errs := make([]string, 0)
+
+	collected := false
+
+	t := time.Now()
+	host, _ := os.Hostname()
 
 	for i, mt := range mts {
-		if !validateName(mt.Namespace().Strings()) {
-			return nil, errors.New(fmt.Sprintf("%s is not valid metric", mt.Namespace().String()))
+		tags := mt.Tags()
+		if tags == nil {
+			tags = map[string]string{}
 		}
-		disk, attribute_path := parseName(mt.Namespace().Strings())
+		tags["hostname"] = host
+
+		namespace := mt.Namespace().Strings()
+		results[i] = plugin.MetricType{
+			Namespace_: mt.Namespace(),
+			Tags_:      tags,
+			Timestamp_: t,
+		}
+
+		if !validateName(namespace) {
+			errs = append(errs, fmt.Sprintf("%s is not valid metric", mt.Namespace().String()))
+			continue
+		}
+		disk, attribute_path := parseName(namespace)
 		buffered, ok := buffered_results[disk]
 		if !ok {
 			values, err := ReadSmartData(disk, sysUtilProvider)
@@ -113,16 +136,22 @@ func (sc *SmartCollector) CollectMetrics(mts []plugin.MetricType) ([]plugin.Metr
 		attribute, ok := buffered[attribute_path]
 
 		if !ok {
-			return nil, errors.New("Unknown attribute " + attribute_path)
-		}
-
-		results[i] = plugin.MetricType{
-			Namespace_: mt.Namespace(),
-			Data_:      attribute,
+			errs = append(errs, "Unknown attribute "+attribute_path)
+		} else {
+			collected = true
+			results[i].Data_ = attribute
 		}
 	}
 
-	return results, nil
+	errsStr := strings.Join(errs, "; ")
+	if collected {
+		if len(errs) > 0 {
+			log.Printf("Data collected but error(s) occured: %v", errsStr)
+		}
+		return results, nil
+	} else {
+		return nil, errors.New(errsStr)
+	}
 }
 
 // GetMetricTypes returns the metric types exposed by smart
