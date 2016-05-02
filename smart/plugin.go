@@ -26,11 +26,12 @@ import (
 
 	"github.com/intelsdi-x/snap/control/plugin"
 	"github.com/intelsdi-x/snap/control/plugin/cpolicy"
+	"github.com/intelsdi-x/snap/core"
 )
 
 const (
 	name       = "smart-disk"
-	version    = 6
+	version    = 7
 	pluginType = plugin.CollectorPluginType
 )
 
@@ -89,16 +90,16 @@ type SmartCollector struct {
 type smartResults map[string]interface{}
 
 // CollectMetrics returns metrics from smart
-func (sc *SmartCollector) CollectMetrics(mts []plugin.PluginMetricType) ([]plugin.PluginMetricType, error) {
+func (sc *SmartCollector) CollectMetrics(mts []plugin.MetricType) ([]plugin.MetricType, error) {
 	buffered_results := map[string]smartResults{}
 
-	results := make([]plugin.PluginMetricType, len(mts))
+	results := make([]plugin.MetricType, len(mts))
 
 	for i, mt := range mts {
-		if !validateName(mt.Namespace()) {
-			return nil, errors.New(fmt.Sprintf("%v is not valid metric", mt.Namespace()))
+		if !validateName(mt.Namespace().Strings()) {
+			return nil, errors.New(fmt.Sprintf("%s is not valid metric", mt.Namespace().String()))
 		}
-		disk, attribute_path := parseName(mt.Namespace())
+		disk, attribute_path := parseName(mt.Namespace().Strings())
 		buffered, ok := buffered_results[disk]
 		if !ok {
 			values, err := ReadSmartData(disk, sysUtilProvider)
@@ -115,7 +116,7 @@ func (sc *SmartCollector) CollectMetrics(mts []plugin.PluginMetricType) ([]plugi
 			return nil, errors.New("Unknown attribute " + attribute_path)
 		}
 
-		results[i] = plugin.PluginMetricType{
+		results[i] = plugin.MetricType{
 			Namespace_: mt.Namespace(),
 			Data_:      attribute,
 		}
@@ -125,18 +126,18 @@ func (sc *SmartCollector) CollectMetrics(mts []plugin.PluginMetricType) ([]plugi
 }
 
 // GetMetricTypes returns the metric types exposed by smart
-func (sc *SmartCollector) GetMetricTypes(_ plugin.PluginConfigType) ([]plugin.PluginMetricType, error) {
+func (sc *SmartCollector) GetMetricTypes(_ plugin.ConfigType) ([]plugin.MetricType, error) {
 	smart_metrics := ListAllKeys()
 	devices, err := sysUtilProvider.ListDevices()
 	if err != nil {
 		return nil, err
 	}
-	mts := make([]plugin.PluginMetricType, 0, len(smart_metrics)*len(devices))
+	mts := make([]plugin.MetricType, 0, len(smart_metrics)*len(devices))
 
 	for _, device := range devices {
 		for _, metric := range smart_metrics {
 			path := makeName(device, metric)
-			mts = append(mts, plugin.PluginMetricType{Namespace_: path})
+			mts = append(mts, plugin.MetricType{Namespace_: core.NewNamespace(path...)})
 		}
 	}
 
