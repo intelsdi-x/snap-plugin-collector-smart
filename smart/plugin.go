@@ -23,7 +23,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 	"time"
 
@@ -102,19 +101,11 @@ func (sc *SmartCollector) CollectMetrics(mts []plugin.MetricType) ([]plugin.Metr
 	collected := false
 
 	t := time.Now()
-	host, _ := os.Hostname()
 
 	for i, mt := range mts {
-		tags := mt.Tags()
-		if tags == nil {
-			tags = map[string]string{}
-		}
-		tags["hostname"] = host
-
 		namespace := mt.Namespace().Strings()
 		results[i] = plugin.MetricType{
 			Namespace_: mt.Namespace(),
-			Tags_:      tags,
 			Timestamp_: t,
 		}
 
