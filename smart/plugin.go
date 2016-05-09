@@ -23,12 +23,12 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/intelsdi-x/snap/control/plugin"
 	"github.com/intelsdi-x/snap/control/plugin/cpolicy"
+	"github.com/intelsdi-x/snap/core"
 )
 
 const (
@@ -92,24 +92,25 @@ type SmartCollector struct {
 type smartResults map[string]interface{}
 
 // CollectMetrics returns metrics from smart
-func (sc *SmartCollector) CollectMetrics(mts []plugin.PluginMetricType) ([]plugin.PluginMetricType, error) {
+func (sc *SmartCollector) CollectMetrics(mts []plugin.MetricType) ([]plugin.MetricType, error) {
 	buffered_results := map[string]smartResults{}
 
-	results := make([]plugin.PluginMetricType, len(mts))
+	results := make([]plugin.MetricType, len(mts))
 	errs := make([]string, 0)
 
 	collected := false
 
 	t := time.Now()
-	host, _ := os.Hostname()
 
 	for i, mt := range mts {
-		namespace := mt.Namespace()
-		results[i] = plugin.PluginMetricType{Namespace_: namespace, Source_: host,
-			Timestamp_: t}
+		namespace := mt.Namespace().Strings()
+		results[i] = plugin.MetricType{
+			Namespace_: mt.Namespace(),
+			Timestamp_: t,
+		}
 
 		if !validateName(namespace) {
-			errs = append(errs, fmt.Sprintf("%v is not valid metric", namespace))
+			errs = append(errs, fmt.Sprintf("%s is not valid metric", mt.Namespace().String()))
 			continue
 		}
 		disk, attribute_path := parseName(namespace)
@@ -131,7 +132,6 @@ func (sc *SmartCollector) CollectMetrics(mts []plugin.PluginMetricType) ([]plugi
 			collected = true
 			results[i].Data_ = attribute
 		}
-
 	}
 
 	errsStr := strings.Join(errs, "; ")
@@ -146,18 +146,18 @@ func (sc *SmartCollector) CollectMetrics(mts []plugin.PluginMetricType) ([]plugi
 }
 
 // GetMetricTypes returns the metric types exposed by smart
-func (sc *SmartCollector) GetMetricTypes(_ plugin.PluginConfigType) ([]plugin.PluginMetricType, error) {
+func (sc *SmartCollector) GetMetricTypes(_ plugin.ConfigType) ([]plugin.MetricType, error) {
 	smart_metrics := ListAllKeys()
 	devices, err := sysUtilProvider.ListDevices()
 	if err != nil {
 		return nil, err
 	}
-	mts := make([]plugin.PluginMetricType, 0, len(smart_metrics)*len(devices))
+	mts := make([]plugin.MetricType, 0, len(smart_metrics)*len(devices))
 
 	for _, device := range devices {
 		for _, metric := range smart_metrics {
 			path := makeName(device, metric)
-			mts = append(mts, plugin.PluginMetricType{Namespace_: path})
+			mts = append(mts, plugin.MetricType{Namespace_: core.NewNamespace(path...)})
 		}
 	}
 
