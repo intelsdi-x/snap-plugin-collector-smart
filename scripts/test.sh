@@ -7,16 +7,30 @@
 # 5. race detector (http://blog.golang.org/race-detector)
 # 6. test coverage (http://blog.golang.org/cover)
 
-# Capture what test we should run
-TEST_SUITE=$1
+# Either command line or environment should be specified
+if [ $# -ne 1 ] && [ -z "$TEST_SUITE" ]; then
+	echo "ERROR; missing TEST_SUITE (Usage: $0 TEST_SUITE)"
+	exit -2
+fi
+# Capture what test we should run from command line
+if [ -z "$TEST_SUITE" ]; then
+	TEST_SUITE=$1
+fi
+# Check validity
+if [ “$TEST_SUITE” != “unit” ]; then
+	echo "Error; invalid TEST_SUITE (value must be one of 'unit'; received $TEST_SUITE)"
+	exit -1
+fi
 
 if [[ $TEST_SUITE == "unit" ]]; then
 	go get github.com/axw/gocov/gocov
 	go get github.com/mattn/goveralls
+	go get -u github.com/golang/lint/golint
 	go get golang.org/x/tools/cmd/goimports
 	go get github.com/smartystreets/goconvey/convey
 	go get golang.org/x/tools/cmd/cover
-	
+	go get github.com/stretchr/testify
+
 	COVERALLS_TOKEN=t47LG6BQsfLwb9WxB56hXUezvwpED6D11
 	TEST_DIRS="main.go smart/"
 	VET_DIRS=". ./smart/..."
@@ -43,10 +57,10 @@ if [[ $TEST_SUITE == "unit" ]]; then
 	echo "go vet"
 	go vet $VET_DIRS
 	# go test -race ./... - Lets disable for now
- 
+
 	# Run test coverage on each subdirectories and merge the coverage profile.
 	echo "mode: count" > profile.cov
- 
+
 	# Standard go tooling behavior is to ignore dirs with leading underscors
 	for dir in $(find . -maxdepth 10 -not -path './.git*' -not -path '*/_*' -not -path './examples/*' -not -path './scripts/*' -not -path './build/*' -not -path './Godeps/*' -type d);
 	do
@@ -59,9 +73,9 @@ if [[ $TEST_SUITE == "unit" ]]; then
 	    		fi
 		fi
 	done
- 
+
 	go tool cover -func profile.cov
- 
+
 	# Disabled Coveralls.io for now
 	# To submit the test coverage result to coveralls.io,
 	# use goveralls (https://github.com/mattn/goveralls)
