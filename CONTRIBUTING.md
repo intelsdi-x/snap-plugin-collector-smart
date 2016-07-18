@@ -12,7 +12,7 @@ Thank you for being part of the community! We love you for it.
 ## Contributing Code
 **_IMPORTANT_**: We encourage contributions to the project from the community. We ask that you keep the following guidelines in mind when planning your contribution.
 
-* Whether your contribution is for a bug fix or a feature request, **create an [Issue](https://github.com/TODO LINK/issues)** and let us know what you are thinking
+* Whether your contribution is for a bug fix or a feature request, **create an [Issue](https://github.com/intelsdi-x/snap-plugin-collector-smart/issues)** and let us know what you are thinking
 * **For bugs**, if you have already found a fix, feel free to submit a Pull Request referencing the Issue you created
 * **For feature requests**, we want to improve upon the library incrementally which means small changes at a time. In order ensure your PR can be reviewed in a timely manner, please keep PRs small, e.g. <10 files and <500 lines changed. If you think this is unrealistic, then mention that within the issue and we can discuss it
 
