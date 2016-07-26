@@ -65,7 +65,7 @@ func sysUtilWithMetrics(metrics []byte) fakeSysutilProvider2 {
 func TestSmartCollectorPlugin(t *testing.T) {
 	Convey("Meta should return Metadata for the plugin", t, func() {
 		meta := Meta()
-		So(meta.Name, ShouldResemble, name)
+		So(meta.Name, ShouldResemble, PluginName)
 		So(meta.Version, ShouldResemble, version)
 		So(meta.Type, ShouldResemble, plugin.CollectorPluginType)
 	})

@@ -32,18 +32,29 @@ import (
 )
 
 const (
-	name       = "smart-disk"
+	PluginName = "smart-disk"
 	version    = 7
 	pluginType = plugin.CollectorPluginType
+
+	nsVendor = "intel"
+	nsClass  = "disk"
+	nsType   = "smart"
 )
 
 var sysUtilProvider SysutilProvider = NewSysutilProvider()
 
-var namespace_prefix = []string{"intel", "disk"}
-var namespace_suffix = []string{"smart"}
+var namespace_prefix = []string{nsVendor, nsClass}
+var namespace_suffix = []string{nsType}
 
 func Meta() *plugin.PluginMeta {
-	return plugin.NewPluginMeta(name, version, pluginType, []string{plugin.SnapGOBContentType}, []string{plugin.SnapGOBContentType})
+	return plugin.NewPluginMeta(
+		PluginName,
+		version,
+		pluginType,
+		[]string{plugin.SnapGOBContentType},
+		[]string{plugin.SnapGOBContentType},
+		plugin.ConcurrencyCount(1),
+	)
 }
 
 func NewSmartCollector() *SmartCollector {
@@ -166,6 +177,10 @@ func (sc *SmartCollector) GetMetricTypes(_ plugin.ConfigType) ([]plugin.MetricTy
 
 //GetConfigPolicy returns a ConfigPolicy
 func (p *SmartCollector) GetConfigPolicy() (*cpolicy.ConfigPolicy, error) {
-	c := cpolicy.New()
-	return c, nil
+	cp := cpolicy.New()
+	rule, _ := cpolicy.NewStringRule("proc_path", false, "/proc")
+	node := cpolicy.NewPolicyNode()
+	node.Add(rule)
+	cp.Add([]string{nsVendor, nsClass, PluginName}, node)
+	return cp, nil
 }
