@@ -1,3 +1,5 @@
+// +build linux
+
 /*
 http://www.apache.org/licenses/LICENSE-2.0.txt
 
@@ -242,10 +244,12 @@ type SysutilProvider interface {
 }
 
 type sysutilProviderLinux struct {
+	proc_path string
+	dev_path  string
 }
 
 func (s *sysutilProviderLinux) OpenDevice(device string) (*os.File, error) {
-	f, err := os.OpenFile("/dev/"+device, os.O_RDWR, 0)
+	f, err := os.OpenFile(s.dev_path+"/"+device, os.O_RDWR, 0)
 	return f, err
 }
 
@@ -263,7 +267,7 @@ func (s *sysutilProviderLinux) Ioctl(fd uintptr, cmd uint, buf []byte) error {
 func (s *sysutilProviderLinux) ListDevices() ([]string, error) {
 	result := []string{}
 
-	f, err := os.Open("/proc/partitions")
+	f, err := os.Open(s.proc_path + "/partitions")
 	if err != nil {
 		return nil, err
 	}
@@ -286,6 +290,9 @@ func (s *sysutilProviderLinux) ListDevices() ([]string, error) {
 
 }
 
-func NewSysutilProvider() SysutilProvider {
-	return &sysutilProviderLinux{}
+func NewSysutilProvider(procPath string, devPath string) SysutilProvider {
+	return &sysutilProviderLinux{
+		proc_path: procPath,
+		dev_path:  devPath,
+	}
 }
