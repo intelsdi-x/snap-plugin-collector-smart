@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -70,10 +71,12 @@ func Meta() *plugin.PluginMeta {
 
 func NewSmartCollector() *SmartCollector {
 	logger := log.New()
+	imutex := new(sync.Mutex)
 	return &SmartCollector{
-		logger:    logger,
-		proc_path: procPath,
-		dev_path:  devPath,
+		logger:           logger,
+		initializedMutex: imutex,
+		proc_path:        procPath,
+		dev_path:         devPath,
 	}
 }
 
@@ -116,6 +119,8 @@ func validateName(namespace []string) bool {
 // Function to check properness of configuration parameters
 // and set plugin attribute accordingly
 func (sc *SmartCollector) setProcDevPath(cfg interface{}) error {
+	sc.initializedMutex.Lock()
+	defer sc.initializedMutex.Unlock()
 	procPath, err := config.GetConfigItem(cfg, "proc_path")
 	if err == nil && len(procPath.(string)) > 0 {
 		procPathStats, err := os.Stat(procPath.(string))
@@ -141,22 +146,26 @@ func (sc *SmartCollector) setProcDevPath(cfg interface{}) error {
 	if sysUtilProvider == nil {
 		sysUtilProvider = NewSysutilProvider(sc.proc_path, sc.dev_path)
 	}
+	sc.initialized = true
 	return nil
 }
 
 type SmartCollector struct {
-	logger    *log.Logger
-	proc_path string
-	dev_path  string
+	initialized      bool
+	initializedMutex *sync.Mutex
+	logger           *log.Logger
+	proc_path        string
+	dev_path         string
 }
 
 type smartResults map[string]interface{}
 
 // CollectMetrics returns metrics from smart
 func (sc *SmartCollector) CollectMetrics(mts []plugin.MetricType) ([]plugin.MetricType, error) {
-	err := sc.setProcDevPath(mts[0])
-	if err != nil {
-		return nil, err
+	if !sc.initialized {
+		if err := sc.setProcDevPath(mts[0]); err != nil {
+			return nil, err
+		}
 	}
 
 	buffered_results := map[string]smartResults{}
@@ -213,9 +222,10 @@ func (sc *SmartCollector) CollectMetrics(mts []plugin.MetricType) ([]plugin.Metr
 
 // GetMetricTypes returns the metric types exposed by smart
 func (sc *SmartCollector) GetMetricTypes(cfg plugin.ConfigType) ([]plugin.MetricType, error) {
-	err := sc.setProcDevPath(cfg)
-	if err != nil {
-		return nil, err
+	if !sc.initialized {
+		if err := sc.setProcDevPath(cfg); err != nil {
+			return nil, err
+		}
 	}
 	smart_metrics := ListAllKeys()
 	devices, err := sysUtilProvider.ListDevices()

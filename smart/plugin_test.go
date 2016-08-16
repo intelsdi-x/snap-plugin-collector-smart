@@ -23,6 +23,7 @@ import (
 	"errors"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/intelsdi-x/snap/control/plugin"
@@ -102,8 +103,9 @@ func TestGetMetricTypes(t *testing.T) {
 			sysUtilProvider = provider
 
 			collector := SmartCollector{
-				proc_path: "/proc",
-				dev_path:  "/dev",
+				initializedMutex: new(sync.Mutex),
+				proc_path:        "/proc",
+				dev_path:         "/dev",
 			}
 
 			Convey("Both devices should be present in metric list", func() {
@@ -235,8 +237,9 @@ func TestCollectMetrics(t *testing.T) {
 		orgProvider := sysUtilProvider
 
 		sc := SmartCollector{
-			proc_path: "/proc",
-			dev_path:  "/dev",
+			initializedMutex: new(sync.Mutex),
+			proc_path:        "/proc",
+			dev_path:         "/dev",
 		}
 		cfg := cdata.NewNode()
 
