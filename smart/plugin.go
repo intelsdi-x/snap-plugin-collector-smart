@@ -121,6 +121,9 @@ func validateName(namespace []string) bool {
 func (sc *SmartCollector) setProcDevPath(cfg interface{}) error {
 	sc.initializedMutex.Lock()
 	defer sc.initializedMutex.Unlock()
+	if sc.initialized {
+		return nil
+	}
 	procPath, err := config.GetConfigItem(cfg, "proc_path")
 	if err == nil && len(procPath.(string)) > 0 {
 		procPathStats, err := os.Stat(procPath.(string))
@@ -162,10 +165,8 @@ type smartResults map[string]interface{}
 
 // CollectMetrics returns metrics from smart
 func (sc *SmartCollector) CollectMetrics(mts []plugin.MetricType) ([]plugin.MetricType, error) {
-	if !sc.initialized {
-		if err := sc.setProcDevPath(mts[0]); err != nil {
-			return nil, err
-		}
+	if err := sc.setProcDevPath(mts[0]); err != nil {
+		return nil, err
 	}
 
 	buffered_results := map[string]smartResults{}
@@ -222,10 +223,8 @@ func (sc *SmartCollector) CollectMetrics(mts []plugin.MetricType) ([]plugin.Metr
 
 // GetMetricTypes returns the metric types exposed by smart
 func (sc *SmartCollector) GetMetricTypes(cfg plugin.ConfigType) ([]plugin.MetricType, error) {
-	if !sc.initialized {
-		if err := sc.setProcDevPath(cfg); err != nil {
-			return nil, err
-		}
+	if err := sc.setProcDevPath(cfg); err != nil {
+		return nil, err
 	}
 	smart_metrics := ListAllKeys()
 	devices, err := sysUtilProvider.ListDevices()
