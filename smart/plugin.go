@@ -22,13 +22,18 @@ package smart
 import (
 	"errors"
 	"fmt"
-	"log"
+	"os"
 	"strings"
+	"sync"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/intelsdi-x/snap/control/plugin"
 	"github.com/intelsdi-x/snap/control/plugin/cpolicy"
 	"github.com/intelsdi-x/snap/core"
+
+	"github.com/intelsdi-x/snap-plugin-utilities/config"
 )
 
 const (
@@ -41,10 +46,17 @@ const (
 	nsType   = "smart"
 )
 
-var sysUtilProvider SysutilProvider = NewSysutilProvider()
+var (
+	//procPath source of data for metrics
+	procPath = "/proc"
+	//devPath source of data for metrics
+	devPath = "/dev"
 
-var namespace_prefix = []string{nsVendor, nsClass}
-var namespace_suffix = []string{nsType}
+	namespace_prefix = []string{nsVendor, nsClass}
+	namespace_suffix = []string{nsType}
+
+	sysUtilProvider SysutilProvider
+)
 
 func Meta() *plugin.PluginMeta {
 	return plugin.NewPluginMeta(
@@ -58,7 +70,14 @@ func Meta() *plugin.PluginMeta {
 }
 
 func NewSmartCollector() *SmartCollector {
-	return &SmartCollector{}
+	logger := log.New()
+	imutex := new(sync.Mutex)
+	return &SmartCollector{
+		logger:           logger,
+		initializedMutex: imutex,
+		proc_path:        procPath,
+		dev_path:         devPath,
+	}
 }
 
 func makeName(device, metric string) []string {
@@ -97,13 +116,59 @@ func validateName(namespace []string) bool {
 	return true
 }
 
+// Function to check properness of configuration parameters
+// and set plugin attribute accordingly
+func (sc *SmartCollector) setProcDevPath(cfg interface{}) error {
+	sc.initializedMutex.Lock()
+	defer sc.initializedMutex.Unlock()
+	if sc.initialized {
+		return nil
+	}
+	procPath, err := config.GetConfigItem(cfg, "proc_path")
+	if err == nil && len(procPath.(string)) > 0 {
+		procPathStats, err := os.Stat(procPath.(string))
+		if err != nil {
+			return err
+		}
+		if !procPathStats.IsDir() {
+			return errors.New(fmt.Sprintf("%s is not a directory", procPath.(string)))
+		}
+		sc.proc_path = procPath.(string)
+	}
+	devPath, err := config.GetConfigItem(cfg, "dev_path")
+	if err == nil && len(devPath.(string)) > 0 {
+		devPathStats, err := os.Stat(devPath.(string))
+		if err != nil {
+			return err
+		}
+		if !devPathStats.IsDir() {
+			return errors.New(fmt.Sprintf("%s is not a directory", devPath.(string)))
+		}
+		sc.dev_path = devPath.(string)
+	}
+	if sysUtilProvider == nil {
+		sysUtilProvider = NewSysutilProvider(sc.proc_path, sc.dev_path)
+	}
+	sc.initialized = true
+	return nil
+}
+
 type SmartCollector struct {
+	initialized      bool
+	initializedMutex *sync.Mutex
+	logger           *log.Logger
+	proc_path        string
+	dev_path         string
 }
 
 type smartResults map[string]interface{}
 
 // CollectMetrics returns metrics from smart
 func (sc *SmartCollector) CollectMetrics(mts []plugin.MetricType) ([]plugin.MetricType, error) {
+	if err := sc.setProcDevPath(mts[0]); err != nil {
+		return nil, err
+	}
+
 	buffered_results := map[string]smartResults{}
 
 	results := make([]plugin.MetricType, len(mts))
@@ -157,7 +222,10 @@ func (sc *SmartCollector) CollectMetrics(mts []plugin.MetricType) ([]plugin.Metr
 }
 
 // GetMetricTypes returns the metric types exposed by smart
-func (sc *SmartCollector) GetMetricTypes(_ plugin.ConfigType) ([]plugin.MetricType, error) {
+func (sc *SmartCollector) GetMetricTypes(cfg plugin.ConfigType) ([]plugin.MetricType, error) {
+	if err := sc.setProcDevPath(cfg); err != nil {
+		return nil, err
+	}
 	smart_metrics := ListAllKeys()
 	devices, err := sysUtilProvider.ListDevices()
 	if err != nil {
@@ -181,6 +249,8 @@ func (p *SmartCollector) GetConfigPolicy() (*cpolicy.ConfigPolicy, error) {
 	rule, _ := cpolicy.NewStringRule("proc_path", false, "/proc")
 	node := cpolicy.NewPolicyNode()
 	node.Add(rule)
-	cp.Add([]string{nsVendor, nsClass, PluginName}, node)
+	cp.Add([]string{nsVendor, nsClass, nsType}, node)
+	rule, _ = cpolicy.NewStringRule("dev_path", false, "/dev")
+	node.Add(rule)
 	return cp, nil
 }

@@ -23,11 +23,14 @@ import (
 	"errors"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/intelsdi-x/snap/control/plugin"
 	"github.com/intelsdi-x/snap/control/plugin/cpolicy"
 	"github.com/intelsdi-x/snap/core"
+	"github.com/intelsdi-x/snap/core/cdata"
+
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -99,12 +102,17 @@ func TestGetMetricTypes(t *testing.T) {
 			orgProvider := sysUtilProvider
 			sysUtilProvider = provider
 
-			collector := SmartCollector{}
+			collector := SmartCollector{
+				initializedMutex: new(sync.Mutex),
+				proc_path:        "/proc",
+				dev_path:         "/dev",
+			}
 
 			Convey("Both devices should be present in metric list", func() {
 
 				dev_one, dev_two := false, false
-				metrics, _ := collector.GetMetricTypes(plugin.ConfigType{})
+				metrics, err := collector.GetMetricTypes(plugin.NewPluginConfigType())
+				So(err, ShouldBeNil)
 
 				for _, m := range metrics {
 					switch m.Namespace().Strings()[2] {
@@ -228,7 +236,12 @@ func TestCollectMetrics(t *testing.T) {
 		orgReader := ReadSmartData
 		orgProvider := sysUtilProvider
 
-		sc := SmartCollector{}
+		sc := SmartCollector{
+			initializedMutex: new(sync.Mutex),
+			proc_path:        "/proc",
+			dev_path:         "/dev",
+		}
+		cfg := cdata.NewNode()
 
 		metric_id, metric_name := firstKnownMetric()
 		metric_ns := strings.Split(metric_name, "/")
@@ -236,7 +249,11 @@ func TestCollectMetrics(t *testing.T) {
 		Convey("When asked about metric not in valid namespace", func() {
 
 			_, err := sc.CollectMetrics([]plugin.MetricType{
-				{Namespace_: core.NewNamespace("cake")}})
+				{
+					Namespace_: core.NewNamespace("cake"),
+					Config_:    cfg,
+				},
+			})
 
 			Convey("Returns error", func() {
 
@@ -260,7 +277,11 @@ func TestCollectMetrics(t *testing.T) {
 			}
 
 			_, err := sc.CollectMetrics([]plugin.MetricType{
-				{Namespace_: core.NewNamespace("intel", "disk", "x", "smart", "y")}})
+				{
+					Namespace_: core.NewNamespace("intel", "disk", "x", "smart", "y"),
+					Config_:    cfg,
+				},
+			})
 
 			Convey("Returns error", func() {
 
@@ -284,7 +305,11 @@ func TestCollectMetrics(t *testing.T) {
 			}
 
 			_, err := sc.CollectMetrics([]plugin.MetricType{
-				{Namespace_: core.NewNamespace("intel", "disk", "x", "smart", "y")}})
+				{
+					Namespace_: core.NewNamespace("intel", "disk", "x", "smart", "y"),
+					Config_:    cfg,
+				},
+			})
 
 			Convey("Returns error", func() {
 
@@ -309,7 +334,11 @@ func TestCollectMetrics(t *testing.T) {
 			}
 
 			metrics, _ := sc.CollectMetrics([]plugin.MetricType{
-				{Namespace_: core.NewNamespace("intel", "disk", "x", "smart").AddStaticElements(metric_ns...)}})
+				{
+					Namespace_: core.NewNamespace("intel", "disk", "x", "smart").AddStaticElements(metric_ns...),
+					Config_:    cfg,
+				},
+			})
 
 			Convey("Asks reader to read metric from correct drive", func() {
 
@@ -340,10 +369,22 @@ func TestCollectMetrics(t *testing.T) {
 				return &result, nil
 			}
 			sc.CollectMetrics([]plugin.MetricType{
-				{Namespace_: core.NewNamespace("intel", "disk", "x", "smart").AddStaticElements(metric_ns...)},
-				{Namespace_: core.NewNamespace("intel", "disk", "y", "smart").AddStaticElements(metric_ns...)},
-				{Namespace_: core.NewNamespace("intel", "disk", "y", "smart").AddStaticElements(metric_ns...)},
-				{Namespace_: core.NewNamespace("intel", "disk", "x", "smart").AddStaticElements(metric_ns...)},
+				{
+					Namespace_: core.NewNamespace("intel", "disk", "x", "smart").AddStaticElements(metric_ns...),
+					Config_:    cfg,
+				},
+				{
+					Namespace_: core.NewNamespace("intel", "disk", "y", "smart").AddStaticElements(metric_ns...),
+					Config_:    cfg,
+				},
+				{
+					Namespace_: core.NewNamespace("intel", "disk", "y", "smart").AddStaticElements(metric_ns...),
+					Config_:    cfg,
+				},
+				{
+					Namespace_: core.NewNamespace("intel", "disk", "x", "smart").AddStaticElements(metric_ns...),
+					Config_:    cfg,
+				},
 			})
 
 			Convey("Reader is asked once per drive", func() {

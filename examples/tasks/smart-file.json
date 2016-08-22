@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "schedule": {
+    "type": "simple",
+    "interval": "5s"
+  },
+  "workflow": {
+    "collect": {
+      "metrics": {
+        "/intel/disk/smart/device/sda/reallocated_sectors": {},
+        "/intel/disk/smart/device/sda/reallocated_sectors_normalized": {},
+        "/intel/disk/smart/device/sda/reserved_blocks": {},
+        "/intel/disk/smart/device/sda/reserved_blocks_normalized": {},
+        "/intel/disk/smart/device/sda/satadown_shifts": {},
+        "/intel/disk/smart/device/sda/satadown_shifts_normalized":{},
+        "/intel/disk/smart/device/sda/thermal_throttle":{},
+        "/intel/disk/smart/device/sda/thermal_throttle_event_count":{}
+      },
+      "config": {
+	"/intel/disk/smart": {
+	  "proc_path": "/proc",
+	  "dev_path": "/dev"
+	}
+      },
+      "process": null,
+      "publish": [
+          {
+              "plugin_name": "mock-file",
+              "config": {
+                  "file": "/tmp/published_smart.log"
+              }
+          }
+      ]
+    }
+  }
+}
