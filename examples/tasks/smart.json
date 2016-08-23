@@ -1,26 +1,29 @@
 {
-    "version": 1,
-    "schedule": {
-        "type": "simple",
-        "interval": "1s"
-    },
-    "workflow": {
-        "collect": {
-            "metrics": {
-                "/intel/disk/sda/smart/reallocatedsectors": {},
-                "/intel/disk/sda/smart/reallocatedsectors/normalized": {},
-                "/intel/disk/sda/smart/reservedblocks": {},
-                "/intel/disk/sda/smart/reservedblocks/normalized": {},
-                "/intel/disk/sda/smart/satadownshifts": {},
-                "/intel/disk/sda/smart/satadownshifts/normalized":{},
-                "/intel/disk/sda/smart/thermalthrottle":{},
-                "/intel/disk/sda/smart/thermalthrottle/eventcount":{}
-
-
-            },
-            "config": {},
-            "process": null,
-            "publish": null
+  "version": 1,
+  "schedule": {
+    "type": "simple",
+    "interval": "5s"
+  },
+  "workflow": {
+    "collect": {
+      "metrics": {
+        "/intel/disk/sda/smart/reallocatedsectors": {},
+        "/intel/disk/sda/smart/reallocatedsectors/normalized": {},
+        "/intel/disk/sda/smart/reservedblocks": {},
+        "/intel/disk/sda/smart/reservedblocks/normalized": {},
+        "/intel/disk/sda/smart/satadownshifts": {},
+        "/intel/disk/sda/smart/satadownshifts/normalized":{},
+        "/intel/disk/sda/smart/thermalthrottle":{},
+        "/intel/disk/sda/smart/thermalthrottle/eventcount":{}
+      },
+      "config": {
+        "/intel/disk/smart": {
+          "proc_path": "/proc",
+          "dev_path": "/dev"
         }
+      },
+      "process": null,
+      "publish": null
     }
+  }
 }

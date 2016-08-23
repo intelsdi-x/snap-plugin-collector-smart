@@ -7,20 +7,20 @@
   "workflow": {
     "collect": {
       "metrics": {
-        "/intel/disk/smart/device/sda/reallocated_sectors": {},
-        "/intel/disk/smart/device/sda/reallocated_sectors_normalized": {},
-        "/intel/disk/smart/device/sda/reserved_blocks": {},
-        "/intel/disk/smart/device/sda/reserved_blocks_normalized": {},
-        "/intel/disk/smart/device/sda/satadown_shifts": {},
-        "/intel/disk/smart/device/sda/satadown_shifts_normalized":{},
-        "/intel/disk/smart/device/sda/thermal_throttle":{},
-        "/intel/disk/smart/device/sda/thermal_throttle_event_count":{}
+        "/intel/disk/sda/smart/reallocatedsectors": {},
+        "/intel/disk/sda/smart/reallocatedsectors/normalized": {},
+        "/intel/disk/sda/smart/reservedblocks": {},
+        "/intel/disk/sda/smart/reservedblocks/normalized": {},
+        "/intel/disk/sda/smart/satadownshifts": {},
+        "/intel/disk/sda/smart/satadownshifts/normalized":{},
+        "/intel/disk/sda/smart/thermalthrottle":{},
+        "/intel/disk/sda/smart/thermalthrottle/eventcount":{}
       },
       "config": {
-	"/intel/disk/smart": {
-	  "proc_path": "/proc",
-	  "dev_path": "/dev"
-	}
+        "/intel/disk/smart": {
+          "proc_path": "/proc",
+          "dev_path": "/dev"
+        }
       },
       "process": null,
       "publish": [
