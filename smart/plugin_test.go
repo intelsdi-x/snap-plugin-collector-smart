@@ -293,12 +293,6 @@ func TestCollectMetrics(t *testing.T) {
 
 				So(err, ShouldNotBeNil)
 
-				Convey("Error is about invalid disk", func() {
-
-					So(err.Error(), ShouldContainSubstring, "not valid disk")
-
-				})
-
 			})
 
 		})
@@ -339,16 +333,17 @@ func TestCollectMetrics(t *testing.T) {
 				return &result, nil
 			}
 
-			metrics, _ := sc.CollectMetrics([]plugin.MetricType{
+			metrics, err := sc.CollectMetrics([]plugin.MetricType{
 				{
-					Namespace_: core.NewNamespace("intel", "disk", "smart", "sda").AddStaticElements(metric_ns...),
+					Namespace_: core.NewNamespace("intel", "disk", "smart", "my_disk").AddStaticElements(metric_ns...),
 					Config_:    cfg,
 				},
 			})
 
 			Convey("Asks reader to read metric from correct drive", func() {
-
-				So(drive_asked, ShouldEqual, "sda")
+				So(err, ShouldBeNil)
+				So(len(metrics), ShouldEqual, 1)
+				So(drive_asked, ShouldEqual, "my_disk")
 
 				Convey("Returns value of metric from reader", func() {
 					So(len(metrics), ShouldBeGreaterThan, 0)

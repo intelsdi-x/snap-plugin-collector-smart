@@ -181,10 +181,7 @@ func (sc *SmartCollector) CollectMetrics(mts []plugin.MetricType) ([]plugin.Metr
 	if err := sc.setProcDevPath(mts[0]); err != nil {
 		return nil, err
 	}
-	devices, err := sysUtilProvider.ListDevices()
-	if err != nil {
-		return nil, err
-	}
+
 	buffered_results := map[string]smartResults{}
 	results := []plugin.MetricType{}
 	errs := make([]string, 0)
@@ -199,6 +196,10 @@ func (sc *SmartCollector) CollectMetrics(mts []plugin.MetricType) ([]plugin.Metr
 		disk, attribute_path := parseName(ns.Strings())
 		if disk == "*" {
 			// All system disks requested
+			devices, err := sysUtilProvider.ListDevices()
+			if err != nil {
+				return nil, err
+			}
 			for _, dev := range devices {
 				collected, result, err := sc.DiskMetrics(ns, t, dev, attribute_path, buffered_results, errs)
 				if err != nil {
@@ -212,18 +213,7 @@ func (sc *SmartCollector) CollectMetrics(mts []plugin.MetricType) ([]plugin.Metr
 			}
 		} else {
 			// Single disk requested
-			found := false
-			for _, dev := range devices {
-				if dev == disk {
-					found = true
-					break
-				}
-			}
-			// Requested disk does not exist on system
-			if !found {
-				errs = append(errs, fmt.Sprintf("%s is not valid disk", disk))
-				continue
-			}
+
 			collected, result, err := sc.DiskMetrics(ns, t, disk, attribute_path, buffered_results, errs)
 			if err != nil {
 				sc.logger.Error(fmt.Sprintf("Error collecting SMART %s data on %s disk: %#+v", attribute_path, disk, err))
