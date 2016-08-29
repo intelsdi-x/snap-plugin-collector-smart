@@ -7,14 +7,14 @@
   "workflow": {
     "collect": {
       "metrics": {
-        "/intel/disk/smart/device/sda/reallocated_sectors": {},
-        "/intel/disk/smart/device/sda/reallocated_sectors_normalized": {},
-        "/intel/disk/smart/device/sda/reserved_blocks": {},
-        "/intel/disk/smart/device/sda/reserved_blocks_normalized": {},
-        "/intel/disk/smart/device/sda/satadown_shifts": {},
-        "/intel/disk/smart/device/sda/satadown_shifts_normalized":{},
-        "/intel/disk/smart/device/sda/thermal_throttle":{},
-        "/intel/disk/smart/device/sda/thermal_throttle_event_count":{}
+        "/intel/disk/smart/*/reallocatedsectors": {},
+        "/intel/disk/smart/*/reallocatedsectors/normalized": {},
+        "/intel/disk/smart/*/reservedblocks": {},
+        "/intel/disk/smart/*/reservedblocks/normalized": {},
+        "/intel/disk/smart/*/satadownshifts": {},
+        "/intel/disk/smart/*/satadownshifts/normalized":{},
+        "/intel/disk/smart/*/thermalthrottle":{},
+        "/intel/disk/smart/*/thermalthrottle/eventcount":{}
       },
       "config": {
 	"/intel/disk/smart": {

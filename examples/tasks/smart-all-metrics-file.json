@@ -7,10 +7,10 @@
   "workflow": {
     "collect": {
       "metrics": {
-        "/intel/disk/*": {}
+        "/intel/disk/smart/*": {}
       },
       "config": {
-        "/intel/disk": {
+        "/intel/disk/smart": {
           "proc_path": "/proc",
           "dev_path": "/dev"
         }
