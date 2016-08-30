@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "schedule": {
+    "type": "simple",
+    "interval": "5s"
+  },
+  "workflow": {
+    "collect": {
+      "metrics": {
+        "/intel/disk/*": {}
+      },
+      "config": {
+        "/intel/disk": {
+          "proc_path": "/proc",
+          "dev_path": "/dev"
+        }
+      },
+      "process": null,
+      "publish": [
+          {
+              "plugin_name": "mock-file",
+              "config": {
+                  "file": "/tmp/published_smart.log"
+              }
+          }
+      ]
+    }
+  }
+}

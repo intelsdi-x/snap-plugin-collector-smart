@@ -171,16 +171,16 @@ func (sc *SmartCollector) CollectMetrics(mts []plugin.MetricType) ([]plugin.Metr
 
 	buffered_results := map[string]smartResults{}
 
-	results := make([]plugin.MetricType, len(mts))
+	results := []plugin.MetricType{}
 	errs := make([]string, 0)
 
 	collected := false
 
 	t := time.Now()
 
-	for i, mt := range mts {
+	for _, mt := range mts {
 		namespace := mt.Namespace().Strings()
-		results[i] = plugin.MetricType{
+		result := plugin.MetricType{
 			Namespace_: mt.Namespace(),
 			Timestamp_: t,
 		}
@@ -206,7 +206,8 @@ func (sc *SmartCollector) CollectMetrics(mts []plugin.MetricType) ([]plugin.Metr
 			errs = append(errs, "Unknown attribute "+attribute_path)
 		} else {
 			collected = true
-			results[i].Data_ = attribute
+			result.Data_ = attribute
+			results = append(results, result)
 		}
 	}
 
