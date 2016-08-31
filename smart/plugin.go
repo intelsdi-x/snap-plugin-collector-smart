@@ -146,34 +146,34 @@ type smartResults map[string]interface{}
 // DiskMetrics returns metrics from smart on given disk
 func (sc *SmartCollector) DiskMetrics(ns []core.NamespaceElement,
 	t time.Time, disk string, attribute_path string,
-	buffered_results map[string]smartResults, errs []string) (bool, plugin.MetricType, error) {
+	buffered_results map[string]smartResults) (plugin.MetricType, error) {
+
 	var result plugin.MetricType
-	collected := false
 	buffered, ok := buffered_results[disk]
 	if !ok {
 		values, err := ReadSmartData(disk, sysUtilProvider)
 		if err != nil {
-			return collected, result, err
+			return result, err
 		}
 		buffered = values.GetAttributes()
 		buffered_results[disk] = buffered
 	}
 	attribute, ok := buffered[attribute_path]
 	if !ok {
-		errs = append(errs, "Unknown attribute "+attribute_path)
-	} else {
-		ns1 := make([]core.NamespaceElement, len(ns))
-		copy(ns1, ns)
-		ns1[3].Value = disk
-		result = plugin.MetricType{
-			Namespace_: ns1,
-			Timestamp_: t,
-			Version_:   version,
-			Data_:      attribute,
-		}
-		collected = true
+		return result, errors.New("Unknown attribute " + attribute_path)
 	}
-	return collected, result, nil
+
+	ns1 := make([]core.NamespaceElement, len(ns))
+	copy(ns1, ns)
+	ns1[3].Value = disk
+	result = plugin.MetricType{
+		Namespace_: ns1,
+		Timestamp_: t,
+		Version_:   version,
+		Data_:      attribute,
+	}
+
+	return result, nil
 }
 
 // CollectMetrics returns metrics from smart
@@ -184,56 +184,46 @@ func (sc *SmartCollector) CollectMetrics(mts []plugin.MetricType) ([]plugin.Metr
 
 	buffered_results := map[string]smartResults{}
 	results := []plugin.MetricType{}
-	errs := make([]string, 0)
-	something_collected := false
+
 	t := time.Now()
 	for _, mt := range mts {
 		ns := mt.Namespace()
 		if !validateName(ns.Strings()) {
-			errs = append(errs, fmt.Sprintf("%s is not valid metric", ns.String()))
-			continue
+			return nil, errors.New(fmt.Sprintf("%s is not valid metric\n", ns.String()))
 		}
 		disk, attribute_path := parseName(ns.Strings())
 		if disk == "*" {
 			// All system disks requested
+
 			devices, err := sysUtilProvider.ListDevices()
 			if err != nil {
 				return nil, err
 			}
 			for _, dev := range devices {
-				collected, result, err := sc.DiskMetrics(ns, t, dev, attribute_path, buffered_results, errs)
+				result, err := sc.DiskMetrics(ns, t, dev, attribute_path, buffered_results)
 				if err != nil {
-					sc.logger.Error(fmt.Sprintf("Error collecting SMART %s data on %s disk: %#+v", attribute_path, dev, err))
+					sc.logger.Warning(fmt.Sprintf("Cannot collect SMART %s data on %s disk: %v\n", attribute_path, dev, err))
 				} else {
-					if collected {
-						results = append(results, result)
-						something_collected = true
-					}
+					results = append(results, result)
 				}
 			}
 		} else {
 			// Single disk requested
 
-			collected, result, err := sc.DiskMetrics(ns, t, disk, attribute_path, buffered_results, errs)
+			result, err := sc.DiskMetrics(ns, t, disk, attribute_path, buffered_results)
 			if err != nil {
-				sc.logger.Error(fmt.Sprintf("Error collecting SMART %s data on %s disk: %#+v", attribute_path, disk, err))
+				sc.logger.Warning(fmt.Sprintf("Cannot collect SMART %s data on %s disk: %v\n", attribute_path, disk, err))
 			} else {
-				if collected {
-					results = append(results, result)
-					something_collected = true
-				}
+				results = append(results, result)
 			}
 		}
 	}
-	errsStr := strings.Join(errs, "; ")
-	if something_collected {
-		if len(errs) > 0 {
-			sc.logger.Error(fmt.Sprintf("Data collected but error(s) occured: %v", errsStr))
-		}
-		return results, nil
-	} else {
-		return nil, errors.New(errsStr)
+
+	if len(results) == 0 {
+		return nil, errors.New("No metrics found\n")
 	}
+
+	return results, nil
 }
 
 // GetMetricTypes returns the metric types exposed by smart
