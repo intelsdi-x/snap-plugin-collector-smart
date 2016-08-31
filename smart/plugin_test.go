@@ -26,6 +26,8 @@ import (
 	"sync"
 	"testing"
 
+	log "github.com/Sirupsen/logrus"
+
 	"github.com/intelsdi-x/snap/control/plugin"
 	"github.com/intelsdi-x/snap/control/plugin/cpolicy"
 	"github.com/intelsdi-x/snap/core"
@@ -103,6 +105,7 @@ func TestGetMetricTypes(t *testing.T) {
 			sysUtilProvider = provider
 
 			collector := SmartCollector{
+				logger:           log.New(),
 				initializedMutex: new(sync.Mutex),
 				proc_path:        "/proc",
 				dev_path:         "/dev",
@@ -110,21 +113,23 @@ func TestGetMetricTypes(t *testing.T) {
 
 			Convey("Both devices should be present in metric list", func() {
 
-				dev_one, dev_two := false, false
+				new_hier, is_dynamic := false, false
 				metrics, err := collector.GetMetricTypes(plugin.NewPluginConfigType())
 				So(err, ShouldBeNil)
 
 				for _, m := range metrics {
 					switch m.Namespace().Strings()[2] {
-					case "DEV_ONE":
-						dev_one = true
-					case "DEV_TWO":
-						dev_two = true
+					case "smart":
+						new_hier = true
+					}
+					switch m.Namespace().Strings()[3] {
+					case "*":
+						is_dynamic = true
 					}
 				}
 
-				So(dev_one, ShouldBeTrue)
-				So(dev_two, ShouldBeTrue)
+				So(new_hier, ShouldBeTrue)
+				So(is_dynamic, ShouldBeTrue)
 
 			})
 
@@ -141,7 +146,7 @@ func TestGetMetricTypes(t *testing.T) {
 func TestParseName(t *testing.T) {
 	Convey("When given correct namespace refering to single word attribute", t, func() {
 
-		disk, attr := parseName([]string{"intel", "disk", "DEV", "smart", "abc"})
+		disk, attr := parseName([]string{"intel", "disk", "smart", "DEV", "abc"})
 
 		Convey("Device should be correctly extracted", func() {
 
@@ -159,7 +164,7 @@ func TestParseName(t *testing.T) {
 
 	Convey("When given correct namespace refering to multi level attribute", t, func() {
 
-		disk, attr := parseName([]string{"intel", "disk", "DEV", "smart",
+		disk, attr := parseName([]string{"intel", "disk", "smart", "DEV",
 			"abc", "def"})
 
 		Convey("Device should be correctly extracted", func() {
@@ -181,7 +186,7 @@ func TestParseName(t *testing.T) {
 func TestValidateName(t *testing.T) {
 	Convey("When given namespace with invalid prefix", t, func() {
 
-		test := validateName([]string{"intel", "cake", "DEV", "smart",
+		test := validateName([]string{"intel", "cake", "smart", "DEV",
 			"abc", "def"})
 
 		Convey("Validation should fail", func() {
@@ -194,7 +199,7 @@ func TestValidateName(t *testing.T) {
 
 	Convey("When given namespace with invalid suffix", t, func() {
 
-		test := validateName([]string{"intel", "disk", "DEV", "dumb",
+		test := validateName([]string{"intel", "disk", "dumb", "DEV",
 			"abc", "def"})
 
 		Convey("Validation should fail", func() {
@@ -207,7 +212,7 @@ func TestValidateName(t *testing.T) {
 
 	Convey("When given correct namespace refering to single word attribute", t, func() {
 
-		test := validateName([]string{"intel", "disk", "DEV", "smart", "abc"})
+		test := validateName([]string{"intel", "disk", "smart", "DEV", "abc"})
 
 		Convey("Validation should pass", func() {
 
@@ -219,7 +224,7 @@ func TestValidateName(t *testing.T) {
 
 	Convey("When given correct namespace refering to multi level attribute", t, func() {
 
-		test := validateName([]string{"intel", "disk", "DEV", "smart",
+		test := validateName([]string{"intel", "disk", "smart", "DEV",
 			"abc", "def"})
 		Convey("Validation should pass", func() {
 
@@ -237,6 +242,7 @@ func TestCollectMetrics(t *testing.T) {
 		orgProvider := sysUtilProvider
 
 		sc := SmartCollector{
+			logger:           log.New(),
 			initializedMutex: new(sync.Mutex),
 			proc_path:        "/proc",
 			dev_path:         "/dev",
@@ -261,7 +267,7 @@ func TestCollectMetrics(t *testing.T) {
 
 				Convey("Error is about invalid metric", func() {
 
-					So(err.Error(), ShouldContainSubstring, "not valid")
+					So(err.Error(), ShouldContainSubstring, "not valid metric")
 
 				})
 
@@ -278,7 +284,7 @@ func TestCollectMetrics(t *testing.T) {
 
 			_, err := sc.CollectMetrics([]plugin.MetricType{
 				{
-					Namespace_: core.NewNamespace("intel", "disk", "x", "smart", "y"),
+					Namespace_: core.NewNamespace("intel", "disk", "smart", "x", "y"),
 					Config_:    cfg,
 				},
 			})
@@ -286,12 +292,6 @@ func TestCollectMetrics(t *testing.T) {
 			Convey("Returns error", func() {
 
 				So(err, ShouldNotBeNil)
-
-				Convey("Error is about unknown metric", func() {
-
-					So(err.Error(), ShouldContainSubstring, "Unknown")
-
-				})
 
 			})
 
@@ -306,7 +306,7 @@ func TestCollectMetrics(t *testing.T) {
 
 			_, err := sc.CollectMetrics([]plugin.MetricType{
 				{
-					Namespace_: core.NewNamespace("intel", "disk", "x", "smart", "y"),
+					Namespace_: core.NewNamespace("intel", "disk", "smart", "sda", "y"),
 					Config_:    cfg,
 				},
 			})
@@ -333,16 +333,17 @@ func TestCollectMetrics(t *testing.T) {
 				return &result, nil
 			}
 
-			metrics, _ := sc.CollectMetrics([]plugin.MetricType{
+			metrics, err := sc.CollectMetrics([]plugin.MetricType{
 				{
-					Namespace_: core.NewNamespace("intel", "disk", "x", "smart").AddStaticElements(metric_ns...),
+					Namespace_: core.NewNamespace("intel", "disk", "smart", "my_disk").AddStaticElements(metric_ns...),
 					Config_:    cfg,
 				},
 			})
 
 			Convey("Asks reader to read metric from correct drive", func() {
-
-				So(drive_asked, ShouldEqual, "x")
+				So(err, ShouldBeNil)
+				So(len(metrics), ShouldEqual, 1)
+				So(drive_asked, ShouldEqual, "my_disk")
 
 				Convey("Returns value of metric from reader", func() {
 					So(len(metrics), ShouldBeGreaterThan, 0)
@@ -357,7 +358,7 @@ func TestCollectMetrics(t *testing.T) {
 
 		Convey("When asked about metrics in valid namespaces", func() {
 
-			asked := map[string]int{"x": 0, "y": 0}
+			asked := map[string]int{"x": 1, "y": 2}
 
 			ReadSmartData = func(device string,
 				sysutilProvider SysutilProvider) (*SmartValues, error) {
@@ -370,26 +371,26 @@ func TestCollectMetrics(t *testing.T) {
 			}
 			sc.CollectMetrics([]plugin.MetricType{
 				{
-					Namespace_: core.NewNamespace("intel", "disk", "x", "smart").AddStaticElements(metric_ns...),
+					Namespace_: core.NewNamespace("intel", "disk", "smart", "sda").AddStaticElements(metric_ns...),
 					Config_:    cfg,
 				},
 				{
-					Namespace_: core.NewNamespace("intel", "disk", "y", "smart").AddStaticElements(metric_ns...),
+					Namespace_: core.NewNamespace("intel", "disk", "smart", "sdb").AddStaticElements(metric_ns...),
 					Config_:    cfg,
 				},
 				{
-					Namespace_: core.NewNamespace("intel", "disk", "y", "smart").AddStaticElements(metric_ns...),
+					Namespace_: core.NewNamespace("intel", "disk", "smart", "sdb").AddStaticElements(metric_ns...),
 					Config_:    cfg,
 				},
 				{
-					Namespace_: core.NewNamespace("intel", "disk", "x", "smart").AddStaticElements(metric_ns...),
+					Namespace_: core.NewNamespace("intel", "disk", "smart", "sda").AddStaticElements(metric_ns...),
 					Config_:    cfg,
 				},
 			})
 
 			Convey("Reader is asked once per drive", func() {
 				So(asked["x"], ShouldEqual, 1)
-				So(asked["y"], ShouldEqual, 1)
+				So(asked["y"], ShouldEqual, 2)
 
 			})
 

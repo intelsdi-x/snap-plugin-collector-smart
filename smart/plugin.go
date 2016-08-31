@@ -38,12 +38,13 @@ import (
 
 const (
 	PluginName = "smart-disk"
-	version    = 7
+	version    = 8
 	pluginType = plugin.CollectorPluginType
 
 	nsVendor = "intel"
 	nsClass  = "disk"
 	nsType   = "smart"
+	devname  = "device"
 )
 
 var (
@@ -52,8 +53,7 @@ var (
 	//devPath source of data for metrics
 	devPath = "/dev"
 
-	namespace_prefix = []string{nsVendor, nsClass}
-	namespace_suffix = []string{nsType}
+	namespace_prefix = []string{nsVendor, nsClass, nsType}
 
 	sysUtilProvider SysutilProvider
 )
@@ -80,21 +80,9 @@ func NewSmartCollector() *SmartCollector {
 	}
 }
 
-func makeName(device, metric string) []string {
-	splited := strings.Split(metric, "/")
-
-	name := []string{}
-	name = append(name, namespace_prefix...)
-	name = append(name, device)
-	name = append(name, namespace_suffix...)
-	name = append(name, splited...)
-
-	return name
-}
-
 func parseName(namespace []string) (disk, attribute string) {
 	disk = namespace[len(namespace_prefix)]
-	smart_namespace := namespace[len(namespace_prefix)+len(namespace_suffix)+1:]
+	smart_namespace := namespace[len(namespace_prefix)+1:]
 	attribute = strings.Join(smart_namespace, "/")
 	return
 }
@@ -105,14 +93,6 @@ func validateName(namespace []string) bool {
 			return false
 		}
 	}
-
-	offset := len(namespace_prefix) + 1
-	for i, v := range namespace_suffix {
-		if namespace[offset+i] != v {
-			return false
-		}
-	}
-
 	return true
 }
 
@@ -163,6 +143,39 @@ type SmartCollector struct {
 
 type smartResults map[string]interface{}
 
+// DiskMetrics returns metrics from smart on given disk
+func (sc *SmartCollector) DiskMetrics(ns []core.NamespaceElement,
+	t time.Time, disk string, attribute_path string,
+	buffered_results map[string]smartResults, errs []string) (bool, plugin.MetricType, error) {
+	var result plugin.MetricType
+	collected := false
+	buffered, ok := buffered_results[disk]
+	if !ok {
+		values, err := ReadSmartData(disk, sysUtilProvider)
+		if err != nil {
+			return collected, result, err
+		}
+		buffered = values.GetAttributes()
+		buffered_results[disk] = buffered
+	}
+	attribute, ok := buffered[attribute_path]
+	if !ok {
+		errs = append(errs, "Unknown attribute "+attribute_path)
+	} else {
+		ns1 := make([]core.NamespaceElement, len(ns))
+		copy(ns1, ns)
+		ns1[3].Value = disk
+		result = plugin.MetricType{
+			Namespace_: ns1,
+			Timestamp_: t,
+			Version_:   version,
+			Data_:      attribute,
+		}
+		collected = true
+	}
+	return collected, result, nil
+}
+
 // CollectMetrics returns metrics from smart
 func (sc *SmartCollector) CollectMetrics(mts []plugin.MetricType) ([]plugin.MetricType, error) {
 	if err := sc.setProcDevPath(mts[0]); err != nil {
@@ -170,51 +183,52 @@ func (sc *SmartCollector) CollectMetrics(mts []plugin.MetricType) ([]plugin.Metr
 	}
 
 	buffered_results := map[string]smartResults{}
-
 	results := []plugin.MetricType{}
 	errs := make([]string, 0)
-
-	collected := false
-
+	something_collected := false
 	t := time.Now()
-
 	for _, mt := range mts {
-		namespace := mt.Namespace().Strings()
-		result := plugin.MetricType{
-			Namespace_: mt.Namespace(),
-			Timestamp_: t,
-		}
-
-		if !validateName(namespace) {
-			errs = append(errs, fmt.Sprintf("%s is not valid metric", mt.Namespace().String()))
+		ns := mt.Namespace()
+		if !validateName(ns.Strings()) {
+			errs = append(errs, fmt.Sprintf("%s is not valid metric", ns.String()))
 			continue
 		}
-		disk, attribute_path := parseName(namespace)
-		buffered, ok := buffered_results[disk]
-		if !ok {
-			values, err := ReadSmartData(disk, sysUtilProvider)
+		disk, attribute_path := parseName(ns.Strings())
+		if disk == "*" {
+			// All system disks requested
+			devices, err := sysUtilProvider.ListDevices()
 			if err != nil {
 				return nil, err
 			}
-			buffered = values.GetAttributes()
-			buffered_results[disk] = buffered
-		}
-
-		attribute, ok := buffered[attribute_path]
-
-		if !ok {
-			errs = append(errs, "Unknown attribute "+attribute_path)
+			for _, dev := range devices {
+				collected, result, err := sc.DiskMetrics(ns, t, dev, attribute_path, buffered_results, errs)
+				if err != nil {
+					sc.logger.Error(fmt.Sprintf("Error collecting SMART %s data on %s disk: %#+v", attribute_path, dev, err))
+				} else {
+					if collected {
+						results = append(results, result)
+						something_collected = true
+					}
+				}
+			}
 		} else {
-			collected = true
-			result.Data_ = attribute
-			results = append(results, result)
+			// Single disk requested
+
+			collected, result, err := sc.DiskMetrics(ns, t, disk, attribute_path, buffered_results, errs)
+			if err != nil {
+				sc.logger.Error(fmt.Sprintf("Error collecting SMART %s data on %s disk: %#+v", attribute_path, disk, err))
+			} else {
+				if collected {
+					results = append(results, result)
+					something_collected = true
+				}
+			}
 		}
 	}
-
 	errsStr := strings.Join(errs, "; ")
-	if collected {
+	if something_collected {
 		if len(errs) > 0 {
-			log.Printf("Data collected but error(s) occured: %v", errsStr)
+			sc.logger.Error(fmt.Sprintf("Data collected but error(s) occured: %v", errsStr))
 		}
 		return results, nil
 	} else {
@@ -224,23 +238,18 @@ func (sc *SmartCollector) CollectMetrics(mts []plugin.MetricType) ([]plugin.Metr
 
 // GetMetricTypes returns the metric types exposed by smart
 func (sc *SmartCollector) GetMetricTypes(cfg plugin.ConfigType) ([]plugin.MetricType, error) {
-	if err := sc.setProcDevPath(cfg); err != nil {
-		return nil, err
-	}
 	smart_metrics := ListAllKeys()
-	devices, err := sysUtilProvider.ListDevices()
-	if err != nil {
-		return nil, err
-	}
-	mts := make([]plugin.MetricType, 0, len(smart_metrics)*len(devices))
-
-	for _, device := range devices {
-		for _, metric := range smart_metrics {
-			path := makeName(device, metric)
-			mts = append(mts, plugin.MetricType{Namespace_: core.NewNamespace(path...)})
+	mts := []plugin.MetricType{}
+	for _, metric := range smart_metrics {
+		ns := core.NewNamespace(namespace_prefix...).AddDynamicElement(devname, "SMART device")
+		for _, elt := range strings.Split(metric, "/") {
+			ns = ns.AddStaticElement(elt)
 		}
+		mts = append(mts, plugin.MetricType{
+			Namespace_:   ns,
+			Description_: "dynamic SMART metric: " + metric,
+		})
 	}
-
 	return mts, nil
 }
 
