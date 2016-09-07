@@ -190,7 +190,9 @@ func (sc *SmartCollector) CollectMetrics(mts []plugin.MetricType) ([]plugin.Metr
 	for _, mt := range mts {
 		ns := mt.Namespace()
 		if !validateName(ns.Strings()) {
-			errs = append(errs, fmt.Sprintf("%s is not valid metric", ns.String()))
+			eStr := fmt.Sprintf("%s is not valid metric", ns.String())
+			sc.logger.Error(eStr)
+			errs = append(errs, eStr)
 			continue
 		}
 		disk, attribute_path := parseName(ns.Strings())
