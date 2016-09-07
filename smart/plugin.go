@@ -203,7 +203,9 @@ func (sc *SmartCollector) CollectMetrics(mts []plugin.MetricType) ([]plugin.Metr
 			for _, dev := range devices {
 				collected, result, err := sc.DiskMetrics(ns, t, dev, attribute_path, buffered_results, errs)
 				if err != nil {
-					sc.logger.Error(fmt.Sprintf("Error collecting SMART %s data on %s disk: %#+v", attribute_path, dev, err))
+					eStr := fmt.Sprintf("Error collecting SMART %s data on %s disk: %#+v", attribute_path, dev, err)
+					sc.logger.Error(eStr)
+					errs = append(errs, eStr)
 				} else {
 					if collected {
 						results = append(results, result)
@@ -213,10 +215,11 @@ func (sc *SmartCollector) CollectMetrics(mts []plugin.MetricType) ([]plugin.Metr
 			}
 		} else {
 			// Single disk requested
-
 			collected, result, err := sc.DiskMetrics(ns, t, disk, attribute_path, buffered_results, errs)
 			if err != nil {
-				sc.logger.Error(fmt.Sprintf("Error collecting SMART %s data on %s disk: %#+v", attribute_path, disk, err))
+				eStr := fmt.Sprintf("Error collecting SMART %s data on %s disk: %#+v", attribute_path, disk, err)
+				sc.logger.Error(eStr)
+				errs = append(errs, eStr)
 			} else {
 				if collected {
 					results = append(results, result)
@@ -226,14 +229,12 @@ func (sc *SmartCollector) CollectMetrics(mts []plugin.MetricType) ([]plugin.Metr
 		}
 	}
 	errsStr := strings.Join(errs, "; ")
-	if something_collected {
-		if len(errs) > 0 {
-			sc.logger.Error(fmt.Sprintf("Data collected but error(s) occured: %v", errsStr))
+	if len(errs) > 0 {
+		if !something_collected {
+			return nil, errors.New(errsStr)
 		}
-		return results, nil
-	} else {
-		return nil, errors.New(errsStr)
 	}
+	return results, nil
 }
 
 // GetMetricTypes returns the metric types exposed by smart
