@@ -279,7 +279,7 @@ func TestCollectMetrics(t *testing.T) {
 
 			ReadSmartData = func(device string,
 				sysutilProvider SysutilProvider) (*SmartValues, error) {
-				return &SmartValues{}, nil
+				return nil, errors.New("x not valid disk")
 			}
 
 			_, err := sc.CollectMetrics([]plugin.MetricType{
@@ -293,6 +293,11 @@ func TestCollectMetrics(t *testing.T) {
 
 				So(err, ShouldNotBeNil)
 
+				Convey("Error is about invalid metric", func() {
+
+					So(err.Error(), ShouldContainSubstring, "not valid disk")
+
+				})
 			})
 
 		})
