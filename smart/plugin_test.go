@@ -186,58 +186,6 @@ func TestParseName(t *testing.T) {
 
 }
 
-func TestValidateName(t *testing.T) {
-	Convey("When given namespace with invalid prefix", t, func() {
-
-		test := validateName([]string{"intel", "cake", "smart", "DEV",
-			"abc", "def"})
-
-		Convey("Validation should fail", func() {
-
-			So(test, ShouldBeFalse)
-
-		})
-
-	})
-
-	Convey("When given namespace with invalid suffix", t, func() {
-
-		test := validateName([]string{"intel", "disk", "dumb", "DEV",
-			"abc", "def"})
-
-		Convey("Validation should fail", func() {
-
-			So(test, ShouldBeFalse)
-
-		})
-
-	})
-
-	Convey("When given correct namespace refering to single word attribute", t, func() {
-
-		test := validateName([]string{"intel", "disk", "smart", "DEV", "abc"})
-
-		Convey("Validation should pass", func() {
-
-			So(test, ShouldBeTrue)
-
-		})
-
-	})
-
-	Convey("When given correct namespace refering to multi level attribute", t, func() {
-
-		test := validateName([]string{"intel", "disk", "smart", "DEV",
-			"abc", "def"})
-		Convey("Validation should pass", func() {
-
-			So(test, ShouldBeTrue)
-
-		})
-
-	})
-}
-
 func TestCollectMetrics(t *testing.T) {
 	Convey("Using fake system", t, func() {
 
@@ -255,30 +203,7 @@ func TestCollectMetrics(t *testing.T) {
 		metric_id, metric_name := firstKnownMetric()
 		metric_ns := strings.Split(metric_name, "/")
 
-		Convey("When asked about metric not in valid namespace", func() {
-
-			_, err := sc.CollectMetrics([]plugin.MetricType{
-				{
-					Namespace_: core.NewNamespace("cake"),
-					Config_:    cfg,
-				},
-			})
-
-			Convey("Returns error", func() {
-
-				So(err, ShouldNotBeNil)
-
-				Convey("Error is about invalid metric", func() {
-
-					So(err.Error(), ShouldContainSubstring, "not valid metric")
-
-				})
-
-			})
-
-		})
-
-		Convey("When asked about metric in valid namespace but unknown to reader", func() {
+		Convey("When asked about metric unknown to reader", func() {
 
 			ReadSmartData = func(device string,
 				sysutilProvider SysutilProvider) (*SmartValues, error) {
@@ -296,16 +221,16 @@ func TestCollectMetrics(t *testing.T) {
 
 				So(err, ShouldNotBeNil)
 
-				Convey("Error is about invalid metric", func() {
+				Convey("Error is about no metrics found", func() {
 
-					So(err.Error(), ShouldContainSubstring, "not valid disk")
+					So(err.Error(), ShouldContainSubstring, "No metrics found")
 
 				})
 			})
 
 		})
 
-		Convey("When asked about metric in valid namespace but reading fails", func() {
+		Convey("When asked about metric when reading fails", func() {
 
 			ReadSmartData = func(device string,
 				sysutilProvider SysutilProvider) (*SmartValues, error) {
@@ -327,7 +252,7 @@ func TestCollectMetrics(t *testing.T) {
 
 		})
 
-		Convey("When asked about metric in valid namespace", func() {
+		Convey("When asked about metric successfully", func() {
 
 			drive_asked := ""
 
@@ -364,7 +289,7 @@ func TestCollectMetrics(t *testing.T) {
 
 		})
 
-		Convey("When asked about metrics in valid namespaces", func() {
+		Convey("When asked about metrics successfully", func() {
 
 			asked := map[string]int{"x": 1, "y": 2}
 
