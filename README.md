@@ -32,10 +32,11 @@ All OSs currently supported by plugin:
 
 ### Installation
 #### Download SMART plugin binary:
-You can get the pre-built binaries for your OS and architecture at snap's [GitHub Releases](https://github.com/intelsdi-x/snap/releases) page.
+You can get the pre-built binaries for your OS and architecture at Snap's [GitHub Releases](https://github.com/intelsdi-x/snap/releases) page.
 
 #### To build the plugin binary:
-Fork https://github.com/intelsdi-x/snap-plugin-collector-smart  
+Fork https://github.com/intelsdi-x/snap-plugin-collector-smart
+
 Clone repo into `$GOPATH/src/github.com/intelsdi-x/`:
 
 ```
@@ -46,7 +47,7 @@ Build the plugin by running make within the cloned repo:
 ```
 $ make
 ```
-This builds the plugin in `/build/rootfs/`
+This builds the plugin in `/build/`
 
 
 ## Documentation
@@ -119,7 +120,7 @@ Namespace | Data Type | Description
 There isn't a current roadmap for this plugin, but it is in active development. As we launch this plugin, we do not have any outstanding requirements for the next release. If you have a feature request, please add it as an [issue](https://github.com/intelsdi-x/snap-plugin-collector-smart/issues/new) and/or submit a [pull request](https://github.com/intelsdi-x/snap-plugin-collector-smart/pulls).
 
 ## Community Support
-This repository is one of **many** plugins in **snap**, a powerful telemetry framework. See the full project at http://github.com/intelsdi-x/snap To reach out to other users, head to the [main framework](https://github.com/intelsdi-x/snap#community-support)
+This repository is one of **many** plugins in **Snap**, a powerful telemetry framework. See the full project at http://github.com/intelsdi-x/snap To reach out to other users, head to the [main framework](https://github.com/intelsdi-x/snap#community-support)
 
 ## Contributing
 We love contributions
@@ -127,7 +128,7 @@ We love contributions
 There's more than one way to give back, from examples to blogs to code updates. See our recommended process in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
-[snap](http://github.com:intelsdi-x/snap), along with this plugin, is an Open Source software released under the Apache 2.0 [License](LICENSE).
+[Snap](http://github.com:intelsdi-x/snap), along with this plugin, is an Open Source software released under the Apache 2.0 [License](LICENSE).
 
 ## Acknowledgements
 
