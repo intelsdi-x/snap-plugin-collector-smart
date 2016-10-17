@@ -38,7 +38,7 @@ import (
 
 const (
 	PluginName = "smart-disk"
-	version    = 8
+	version    = 9
 	pluginType = plugin.CollectorPluginType
 
 	nsVendor = "intel"
@@ -85,15 +85,6 @@ func parseName(namespace []string) (disk, attribute string) {
 	smart_namespace := namespace[len(namespace_prefix)+1:]
 	attribute = strings.Join(smart_namespace, "/")
 	return
-}
-
-func validateName(namespace []string) bool {
-	for i, v := range namespace_prefix {
-		if namespace[i] != v {
-			return false
-		}
-	}
-	return true
 }
 
 // Function to check properness of configuration parameters
@@ -146,34 +137,33 @@ type smartResults map[string]interface{}
 // DiskMetrics returns metrics from smart on given disk
 func (sc *SmartCollector) DiskMetrics(ns []core.NamespaceElement,
 	t time.Time, disk string, attribute_path string,
-	buffered_results map[string]smartResults, errs []string) (bool, plugin.MetricType, error) {
+	buffered_results map[string]smartResults) (plugin.MetricType, error) {
 	var result plugin.MetricType
-	collected := false
 	buffered, ok := buffered_results[disk]
 	if !ok {
 		values, err := ReadSmartData(disk, sysUtilProvider)
 		if err != nil {
-			return collected, result, err
+			return result, err
 		}
 		buffered = values.GetAttributes()
 		buffered_results[disk] = buffered
 	}
 	attribute, ok := buffered[attribute_path]
 	if !ok {
-		errs = append(errs, "Unknown attribute "+attribute_path)
-	} else {
-		ns1 := make([]core.NamespaceElement, len(ns))
-		copy(ns1, ns)
-		ns1[3].Value = disk
-		result = plugin.MetricType{
-			Namespace_: ns1,
-			Timestamp_: t,
-			Version_:   version,
-			Data_:      attribute,
-		}
-		collected = true
+		return result, fmt.Errorf("Unknown attribute %s", attribute_path)
 	}
-	return collected, result, nil
+
+	ns1 := make([]core.NamespaceElement, len(ns))
+	copy(ns1, ns)
+	ns1[3].Value = disk
+	result = plugin.MetricType{
+		Namespace_: ns1,
+		Timestamp_: t,
+		Version_:   version,
+		Data_:      attribute,
+	}
+
+	return result, nil
 }
 
 // CollectMetrics returns metrics from smart
@@ -184,17 +174,10 @@ func (sc *SmartCollector) CollectMetrics(mts []plugin.MetricType) ([]plugin.Metr
 
 	buffered_results := map[string]smartResults{}
 	results := []plugin.MetricType{}
-	errs := make([]string, 0)
-	something_collected := false
+
 	t := time.Now()
 	for _, mt := range mts {
 		ns := mt.Namespace()
-		if !validateName(ns.Strings()) {
-			eStr := fmt.Sprintf("%s is not valid metric", ns.String())
-			sc.logger.Error(eStr)
-			errs = append(errs, eStr)
-			continue
-		}
 		disk, attribute_path := parseName(ns.Strings())
 		if disk == "*" {
 			// All system disks requested
@@ -203,39 +186,28 @@ func (sc *SmartCollector) CollectMetrics(mts []plugin.MetricType) ([]plugin.Metr
 				return nil, err
 			}
 			for _, dev := range devices {
-				collected, result, err := sc.DiskMetrics(ns, t, dev, attribute_path, buffered_results, errs)
+				result, err := sc.DiskMetrics(ns, t, dev, attribute_path, buffered_results)
 				if err != nil {
-					eStr := fmt.Sprintf("Error collecting SMART %s data on %s disk: %#+v", attribute_path, dev, err)
-					sc.logger.Error(eStr)
-					errs = append(errs, eStr)
+					sc.logger.Warning(fmt.Sprintf("Error collecting SMART %s data on %s disk: %v", attribute_path, dev, err))
 				} else {
-					if collected {
-						results = append(results, result)
-						something_collected = true
-					}
+					results = append(results, result)
 				}
 			}
 		} else {
 			// Single disk requested
-			collected, result, err := sc.DiskMetrics(ns, t, disk, attribute_path, buffered_results, errs)
+			result, err := sc.DiskMetrics(ns, t, disk, attribute_path, buffered_results)
 			if err != nil {
-				eStr := fmt.Sprintf("Error collecting SMART %s data on %s disk: %#+v", attribute_path, disk, err)
-				sc.logger.Error(eStr)
-				errs = append(errs, eStr)
+				sc.logger.Warning(fmt.Sprintf("Error collecting SMART %s data on %s disk: %v", attribute_path, disk, err))
 			} else {
-				if collected {
-					results = append(results, result)
-					something_collected = true
-				}
+				results = append(results, result)
 			}
 		}
 	}
-	errsStr := strings.Join(errs, "; ")
-	if len(errs) > 0 {
-		if !something_collected {
-			return nil, errors.New(errsStr)
-		}
+	if len(results) == 0 {
+		return nil, errors.New("No metrics found")
+
 	}
+
 	return results, nil
 }
 
