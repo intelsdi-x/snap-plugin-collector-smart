@@ -12,24 +12,24 @@
         "/intel/disk/smart/*/reservedblocks": {},
         "/intel/disk/smart/*/reservedblocks/normalized": {},
         "/intel/disk/smart/*/satadownshifts": {},
-        "/intel/disk/smart/*/satadownshifts/normalized":{},
-        "/intel/disk/smart/*/thermalthrottle":{},
-        "/intel/disk/smart/*/thermalthrottle/eventcount":{}
+        "/intel/disk/smart/*/satadownshifts/normalized": {},
+        "/intel/disk/smart/*/thermalthrottle": {},
+        "/intel/disk/smart/*/thermalthrottle/eventcount": {}
       },
       "config": {
-	"/intel/disk/smart": {
-	  "proc_path": "/proc",
-	  "dev_path": "/dev"
-	}
+        "/intel/disk/smart": {
+          "proc_path": "/proc",
+          "dev_path": "/dev"
+        }
       },
       "process": null,
       "publish": [
-          {
-              "plugin_name": "file",
-              "config": {
-                  "file": "/tmp/published_smart.log"
-              }
+        {
+          "plugin_name": "file",
+          "config": {
+            "file": "/tmp/published_smart.log"
           }
+        }
       ]
     }
   }
