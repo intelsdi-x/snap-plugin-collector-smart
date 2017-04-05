@@ -1,3 +1,10 @@
+# Deprecation Notice
+No new development is planned for this plugin and its support is "best effort".
+
+For SMART statistics checkout [https://github.com/intelsdi-x/snap-plugin-collector-pysmart](https://github.com/intelsdi-x/snap-plugin-collector-pysmart)
+
+For Intel P3700 series SSD's checkout: [https://github.com/intelsdi-x/snap-plugin-collector-pciessd](https://github.com/intelsdi-x/snap-plugin-collector-pciessd)
+
 # snap collector plugin - SMART
 
 This plugin monitors storage systems from Intel's SSDs. Raw data interpretation is based on [State Drive DC S3700 Series specification](http://www.intel.com/content/dam/www/public/us/en/documents/product-specifications/ssd-dc-s3700-spec.pdf). 
